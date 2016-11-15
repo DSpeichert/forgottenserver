@@ -18,6 +18,7 @@
 #include "script.h"
 #include "scriptmanager.h"
 #include "server.h"
+#include "http_api/server.h"
 
 #include <fstream>
 
@@ -46,7 +47,7 @@ void startupErrorMessage(const std::string& errorStr)
 	g_loaderSignal.notify_all();
 }
 
-void mainLoader(int argc, char* argv[], ServiceManager* services);
+void mainLoader(int argc, char* argv[], ServiceManager* services, HttpApi::Server* apiServer);
 bool argumentsHandler(const StringVector& args);
 
 [[noreturn]] void badAllocationHandler()
@@ -67,12 +68,13 @@ int main(int argc, char* argv[])
 	// Setup bad allocation handler
 	std::set_new_handler(badAllocationHandler);
 
-	ServiceManager serviceManager;
-
+	boost::asio::io_service service;
+	ServiceManager serviceManager{service};
+	HttpApi::Server apiServer{service};
 	g_dispatcher.start();
 	g_scheduler.start();
 
-	g_dispatcher.addTask(createTask([=, services = &serviceManager]() { mainLoader(argc, argv, services); }));
+	g_dispatcher.addTask(createTask([=, services = &serviceManager, api = &apiServer]() { mainLoader(argc, argv, services, api); }));
 
 	g_loaderSignal.wait(g_loaderUniqueLock);
 
@@ -86,6 +88,9 @@ int main(int argc, char* argv[])
 		g_dispatcher.shutdown();
 	}
 
+	apiServer.stop();
+	service.reset();
+	service.poll(); // We need to poll to execute the api stop
 	g_scheduler.join();
 	g_databaseTasks.join();
 	g_dispatcher.join();
@@ -128,7 +133,7 @@ void printServerVersion()
 	std::cout << std::endl;
 }
 
-void mainLoader(int, char*[], ServiceManager* services)
+void mainLoader(int, char*[], ServiceManager* services, HttpApi::Server* apiServer)
 {
 	//dispatcher thread
 	g_game.setGameState(GAME_STATE_STARTUP);
@@ -320,6 +325,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 	g_game.start(services);
 	g_game.setGameState(GAME_STATE_NORMAL);
 	g_loaderSignal.notify_all();
+	apiServer->loadRoutes();
 }
 
 bool argumentsHandler(const StringVector& args)
