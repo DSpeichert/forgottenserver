@@ -1,0 +1,26 @@
+Source: forgottenserver-master
+Section: unknown
+Priority: optional
+Maintainer: unknown <otland@otland.net>
+Build-Depends: debhelper-compat (= 12),
+			   cmake,
+			   build-essential,
+			   libluajit-5.1-dev,
+			   libmysqlclient-dev,
+			   libboost-date-time-devm
+			   libboost-system-dev,
+			   libboost-iostreams-dev,
+			   libboost-filesystem-dev,
+			   libpugixml-dev,
+			   libcrypto++-dev,
+			   libfmt-dev
+Standards-Version: 4.4.1
+Homepage: https://otland.net
+Vcs-Browser: https://github.com/otland/forgottenserver
+Vcs-Git: https://github.com/otland/forgottenserver.git
+
+Package: forgottenserver-master
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: OTS MMORPG server
+ A free and open-source MMORPG server emulator written in C++
