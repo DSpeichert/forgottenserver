@@ -7,7 +7,7 @@ Build-Depends: debhelper-compat (= 12),
 			   build-essential,
 			   libluajit-5.1-dev,
 			   libmysqlclient-dev,
-			   libboost-date-time-devm
+			   libboost-date-time-dev,
 			   libboost-system-dev,
 			   libboost-iostreams-dev,
 			   libboost-filesystem-dev,
