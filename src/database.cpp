@@ -22,7 +22,12 @@
 #include "configmanager.h"
 #include "database.h"
 
-#include <mysql/errmsg.h>
+//#if __has_include(<mariadb/errmsg.h>)
+//#include <mariadb/errmsg.h>
+//#else
+//#include <mysql/errmsg.h>
+//#endif
+#include <errmsg.h>
 
 extern ConfigManager g_config;
 

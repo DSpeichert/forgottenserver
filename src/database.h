@@ -22,7 +22,12 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <mysql/mysql.h>
+//#if __has_include(<mariadb/mysql.h>)
+//#include <mariadb/mysql.h>
+//#else
+//#include <mysql/mysql.h>
+//#endif
+#include <mysql.h>
 
 class DBResult;
 using DBResult_ptr = std::shared_ptr<DBResult>;
