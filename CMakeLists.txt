@@ -1,17 +1,19 @@
-cmake_minimum_required(VERSION 3.10)
+# see https://cliutils.gitlab.io/modern-cmake/ if you want to learn cmake
+cmake_minimum_required(VERSION 3.16...3.22)
 
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-project(tfs CXX)
+project(tfs LANGUAGES CXX)
 
 add_subdirectory(src)
 add_executable(tfs ${tfs_SRC})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-set_target_properties(tfs PROPERTIES CXX_STANDARD 17)
+target_compile_features(tfs PUBLIC cxx_std_17)
 set_target_properties(tfs PROPERTIES CXX_STANDARD_REQUIRED ON)
+set_target_properties(tfs PROPERTIES CXX_EXTENSIONS OFF)
 
 if (NOT WIN32)
     add_compile_options(-Wall -Werror -pipe -fvisibility=hidden)
@@ -22,6 +24,13 @@ set(CMAKE_CXX_FLAGS_PERFORMANCE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 if (CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options(-fno-strict-aliasing)
 endif ()
+
+option(STATIC "Link statically" OFF)
+if (STATIC)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_USE_STATIC_RUNTIME ON)
+    target_link_libraries(tfs -static)
+endif()
 
 # Find packages.
 find_package(CryptoPP QUIET)
@@ -61,7 +70,9 @@ else ()
     find_package(Lua REQUIRED)
 endif ()
 
-find_package(Boost 1.66.0 REQUIRED COMPONENTS date_time system filesystem iostreams)
+set(Boost_USE_MULTITHREADED ON)
+find_package(Boost 1.71.0 REQUIRED COMPONENTS date_time system filesystem iostreams)
+message(STATUS "Boost version: ${Boost_VERSION}")
 
 include_directories(${Boost_INCLUDE_DIRS} ${Crypto++_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${PUGIXML_INCLUDE_DIR})
 target_link_libraries(tfs PRIVATE
@@ -101,16 +112,27 @@ if(NOT SKIP_GIT)
 		add_dependencies(tfs check_git)
 		target_include_directories(tfs PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 	endif()
+
+    if(Git_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        endif()
+    endif()
 endif()
 ### END  Git Version ###
 
 # Precompiled header
-# note: cotire() must be called last on a target
-if (${CMAKE_VERSION} VERSION_GREATER "3.16.0")
-    target_precompile_headers(tfs PUBLIC src/otpch.h)
-else ()
-    include(cotire)
-    set_target_properties(tfs PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/otpch.h")
-    set_target_properties(tfs PROPERTIES COTIRE_ADD_UNITY_BUILD FALSE)
-    cotire(tfs)
-endif ()
+target_precompile_headers(tfs PUBLIC src/otpch.h)
+
+set(default_build_type "Release")
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+    set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+            STRING "Choose the type of build." FORCE)
+    # Set the possible values of build type for cmake-gui
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+            "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()

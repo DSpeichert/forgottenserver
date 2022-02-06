@@ -180,6 +180,12 @@ pip-log.txt
 # Notepad++ backups
 *.bak
 
+# cmake
+CMakeUserPresets.json
+
+# vcpkg
+vcpkg_installed/
+
 #############
 ## TFS / OT
 #############

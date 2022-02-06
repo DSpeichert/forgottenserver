@@ -13,7 +13,7 @@
 // git rev-parse --short HEAD
 #define GIT_SHORT_SHA1 "@GIT_SHORT_SHA1@"
 
-// Whether or not there were uncommited changes present.
+// Whether or not there were uncommitted changes present.
 #define GIT_IS_DIRTY @GIT_IS_DIRTY@
 
 // When HEAD was committed.

@@ -1,0 +1,19 @@
+{
+  "name": "forgottenserver",
+  "version-string": "0.0.1",
+  "homepage": "https://otland.net",
+  "description": "A free and open-source MMORPG server emulator written in C++",
+  "dependencies": [
+	"boost-iostreams",
+	"boost-asio",
+	"boost-system",
+	"boost-filesystem",
+	"boost-variant",
+	"boost-lockfree",
+	"cryptopp",
+	"fmt",
+	"libmariadb",
+	"luajit",
+	"pugixml"
+  ]
+}
