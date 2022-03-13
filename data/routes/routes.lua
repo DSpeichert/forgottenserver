@@ -27,6 +27,9 @@ local function registerRoutes()
 	local json = require ('data.routes.lib.json')
 	local stdApi = require('data.routes.scripts.standard_ot_api')
 	stdApi.register({router = Router, json = json})
+
+	local loginApi = require('data.routes.scripts.login_webservice')
+	loginApi.register({router = Router, json = json})
 end
 
 registerRoutes()
