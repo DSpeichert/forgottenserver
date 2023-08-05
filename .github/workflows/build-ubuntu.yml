@@ -19,6 +19,8 @@ on:
       - CMakeLists.txt
       - CMakePresets.json
 
+  workflow_dispatch:
+
 jobs:
   build-ubuntu:
     name: ubuntu-${{ matrix.buildtype }}-luajit=${{ matrix.luajit }}
