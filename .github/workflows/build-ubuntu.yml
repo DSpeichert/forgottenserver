@@ -61,7 +61,7 @@ jobs:
 
       - name: Build package version
         id: version
-        uses: paulhatch/semantic-version@v5
+        uses: paulhatch/semantic-version@v5.0.3
         with:
           version_format: "${major}.${minor}.${patch}-pre${increment}"
         if: ${{ matrix.buildtype }} == "Release"
@@ -91,7 +91,7 @@ jobs:
           maintainer: Otland
           version: ${{ steps.version.outputs.version }}~${{ steps.vars.outputs.sha_short }}-0
           arch: 'amd64'
-          depends: 'libluajit-5.1-2, libmysqlclient21, libboost-iostreams1.74.0, libpugixml1v5, libcrypto++8, libfmt8'
+          depends: 'libluajit-5.1-2, libmysqlclient21, libboost-filesystem1.74.0, libboost-iostreams1.74.0, libpugixml1v5, libcrypto++8, libfmt8'
           desc: 'See: https://github.com/otland/forgottenserver'
         if: ${{ matrix.buildtype }} == "Release"
 
