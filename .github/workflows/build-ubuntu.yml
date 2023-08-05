@@ -88,7 +88,6 @@ jobs:
         with:
           package: tfs-${{ steps.vars.outputs.branch }}
           package_root: .debpkg
-          compress_type: zstd
           maintainer: Otland
           version: ${{ steps.version.outputs.version }}~${{ steps.vars.outputs.sha_short }}-0
           arch: 'amd64'
