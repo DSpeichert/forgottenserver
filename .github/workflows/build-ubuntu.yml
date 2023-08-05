@@ -26,6 +26,7 @@ jobs:
     name: ubuntu-${{ matrix.buildtype }}-luajit=${{ matrix.luajit }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         buildtype: [Debug, Release]
         luajit: [on, off]
@@ -57,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ubuntu-tfs-amd64-${{ github.sha }}
-          path: ${{ runner.workspace }}/build/tfs
+          path: build/tfs
 
       - name: Build package version
         id: version
@@ -77,7 +78,7 @@ jobs:
         run: |
           mkdir -p .debpkg/usr/bin
           mkdir -p .debpkg/usr/share/tfs-${{ steps.vars.outputs.branch }}
-          cp ${{ runner.workspace }}/build/tfs .debpkg/usr/bin/tfs-${{ steps.vars.outputs.branch }}
+          cp build/tfs .debpkg/usr/bin/tfs-${{ steps.vars.outputs.branch }}
           cp -r data/ LICENSE config.lua.dist key.pem schema.sql .debpkg/usr/share/tfs-${{ steps.vars.outputs.branch }}/
         if: ${{ matrix.buildtype }} == "Release"
 
