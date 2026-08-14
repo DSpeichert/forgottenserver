@@ -24,12 +24,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
+      # apt-key is deprecated and no longer shipped on current Ubuntu images,
+      # and the repository codename has to follow the runner image rather than
+      # being pinned to jammy.
       - name: Setup LLVM repository
         run: |
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository -y 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy main'
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg
+          codename="$(lsb_release -cs)"
+          echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/$codename/ llvm-toolchain-$codename main" \
+            | sudo tee /etc/apt/sources.list.d/llvm.list
 
       - name: Install dependencies
         run: sudo apt update -qq && sudo apt install -yqq clang-format
