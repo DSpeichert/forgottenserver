@@ -54,6 +54,11 @@ class LockfreePoolingAllocator : public std::allocator<T>
 		explicit constexpr LockfreePoolingAllocator(const U&) {}
 		using value_type = T;
 
+		template <typename U>
+		struct rebind {
+			using other = LockfreePoolingAllocator<U, CAPACITY>;
+		};
+
 		T* allocate(size_t) const {
 			auto& inst = LockfreeFreeList<sizeof(T), CAPACITY>::get();
 			void* p; // NOTE: p doesn't have to be initialized
