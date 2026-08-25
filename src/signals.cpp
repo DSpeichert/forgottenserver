@@ -168,7 +168,7 @@ void dispatchSignalHandler(int signal)
 
 }
 
-Signals::Signals(asio::io_service& service): set(service)
+Signals::Signals(asio::io_context& service): set(service)
 {
 	set.add(SIGINT);
 	set.add(SIGTERM);

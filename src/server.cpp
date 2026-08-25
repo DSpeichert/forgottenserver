@@ -39,7 +39,7 @@ void ServiceManager::stop()
 
 	for (auto& servicePortIt : acceptors) {
 		try {
-			io_service.post(std::bind(&ServicePort::onStopServer, servicePortIt.second));
+			asio::post(io_service, std::bind(&ServicePort::onStopServer, servicePortIt.second));
 		} catch (std::system_error& e) {
 			std::cout << "[ServiceManager::stop] Network Error: " << e.what() << std::endl;
 		}
@@ -47,7 +47,7 @@ void ServiceManager::stop()
 
 	acceptors.clear();
 
-	death_timer.expires_from_now(std::chrono::seconds(3));
+	death_timer.expires_after(std::chrono::seconds(3));
 	death_timer.async_wait(std::bind(&ServiceManager::die, this));
 }
 
@@ -153,7 +153,7 @@ void ServicePort::open(uint16_t port)
 	try {
 		if (g_config.getBoolean(ConfigManager::BIND_ONLY_GLOBAL_ADDRESS)) {
 			acceptor.reset(new asio::ip::tcp::acceptor(io_service, asio::ip::tcp::endpoint(
-			            asio::ip::address(asio::ip::address_v4::from_string(g_config.getString(ConfigManager::IP))), serverPort)));
+			            asio::ip::address(asio::ip::make_address_v4(g_config.getString(ConfigManager::IP))), serverPort)));
 		} else {
 			acceptor.reset(new asio::ip::tcp::acceptor(io_service, asio::ip::tcp::endpoint(
 			            asio::ip::address(asio::ip::address_v4(INADDR_ANY)), serverPort)));

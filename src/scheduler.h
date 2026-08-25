@@ -48,7 +48,7 @@ class Scheduler : public ThreadHolder<Scheduler>
 		std::atomic<uint32_t> lastEventId{0};
 		std::unordered_map<uint32_t, asio::steady_timer> eventIdTimerMap;
 		asio::io_context io_context;
-		asio::io_context::work work{io_context};
+		asio::executor_work_guard<asio::io_context::executor_type> work{asio::make_work_guard(io_context)};
 };
 
 extern Scheduler g_scheduler;
