@@ -10,7 +10,7 @@ add_executable(tfs ${tfs_SRC})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-set_target_properties(tfs PROPERTIES CXX_STANDARD 17)
+set_target_properties(tfs PROPERTIES CXX_STANDARD 23)
 set_target_properties(tfs PROPERTIES CXX_STANDARD_REQUIRED ON)
 
 if (NOT WIN32)
@@ -30,7 +30,6 @@ if (CryptoPP_FOUND)  # vcpkg-provided cmake package called CryptoPP
 else()
     find_package(Crypto++ REQUIRED)
 endif ()
-find_package(fmt 6.1.2 REQUIRED)
 
 # Look for vcpkg-provided libmariadb first
 # If we link to the file directly, we might miss its dependencies from vcpkg
@@ -61,14 +60,26 @@ else ()
     find_package(Lua REQUIRED)
 endif ()
 
-find_package(Boost 1.66.0 REQUIRED COMPONENTS date_time filesystem iostreams)
+# Only header-only parts of Boost are used (lexical_cast, variant).
+find_package(Boost 1.66.0 REQUIRED)
 
-include_directories(${Boost_INCLUDE_DIRS} ${Crypto++_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${PUGIXML_INCLUDE_DIR})
+# Standalone (non-Boost) Asio. vcpkg ships a CMake config with an asio::asio
+# target; distribution packages (libasio-dev, asio-dev, ...) only install the
+# headers.
+find_package(asio CONFIG QUIET)
+if (asio_FOUND)
+    set(ASIO_LIBRARIES asio::asio)
+else ()
+    find_path(ASIO_INCLUDE_DIR asio.hpp)
+    if (NOT ASIO_INCLUDE_DIR)
+        message(FATAL_ERROR "Could not find standalone Asio (asio.hpp). Install it or set ASIO_INCLUDE_DIR.")
+    endif ()
+    set(ASIO_LIBRARIES "")
+endif ()
+
+include_directories(${Boost_INCLUDE_DIRS} ${ASIO_INCLUDE_DIR} ${Crypto++_INCLUDE_DIR} ${LUA_INCLUDE_DIR} ${MYSQL_INCLUDE_DIR} ${PUGIXML_INCLUDE_DIR})
 target_link_libraries(tfs PRIVATE
-        Boost::date_time
-        Boost::filesystem
-        Boost::iostreams
-        fmt::fmt
+        ${ASIO_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${Crypto++_LIBRARIES}
         ${LUA_LIBRARIES}
