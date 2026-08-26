@@ -5,6 +5,7 @@
 #define FS_CONNECTION_H
 
 #include "networkmessage.h"
+#include "proxyprotocol.h"
 
 enum ConnectionState_t
 {
@@ -84,10 +85,19 @@ public:
 	void send(const OutputMessage_ptr& msg);
 
 	const Address& getIP() const { return remoteAddress; };
+	// Whether the connection was relayed by a proxy that announced the original client address (PROXY protocol)
+	bool isProxied() const { return proxied; }
 
 private:
+	void resolveRemoteAddress();
+
 	void parseHeader(const boost::system::error_code& error);
 	void parsePacket(const boost::system::error_code& error);
+
+	void readProxyHeader();
+	void parseProxyHeader(const boost::system::error_code& error);
+	void parseProxyAddress(const boost::system::error_code& error);
+	void applyProxyHeader();
 
 	void onWriteOperation(const boost::system::error_code& error);
 
@@ -116,10 +126,14 @@ private:
 	time_t timeConnected;
 	uint32_t packetsSent = 0;
 
+	tfs::net::proxy_protocol::Header proxyHeader{};
+
 	ConnectionState_t connectionState = CONNECTION_STATE_PENDING;
 	bool receivedFirst = false;
 	bool receivedName = false;
 	bool receivedLastChar = false;
+	bool receivedFirstHeader = false;
+	bool proxied = false;
 };
 
 #endif // FS_CONNECTION_H
