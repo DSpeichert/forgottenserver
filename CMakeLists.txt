@@ -24,10 +24,12 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 endif ()
 
 # Find packages.
-find_package(CryptoPP QUIET)
-if (CryptoPP_FOUND)  # vcpkg-provided cmake package called CryptoPP
-    set(Crypto++_LIBRARIES "cryptopp-static")
-else()
+# vcpkg builds Crypto++ with cryptopp-cmake, which installs a CMake config
+# exporting cryptopp::cryptopp. Fall back to the bundled find module otherwise.
+find_package(cryptopp CONFIG QUIET)
+if (cryptopp_FOUND)
+    set(Crypto++_LIBRARIES cryptopp::cryptopp)
+else ()
     find_package(Crypto++ REQUIRED)
 endif ()
 
@@ -35,7 +37,7 @@ endif ()
 # If we link to the file directly, we might miss its dependencies from vcpkg
 find_package(unofficial-libmariadb CONFIG QUIET)
 if (unofficial-libmariadb_FOUND)
-    set(MYSQL_CLIENT_LIBS "libmariadb")
+    set(MYSQL_CLIENT_LIBS unofficial::libmariadb)
 else ()
     find_package(MySQL REQUIRED)
 endif ()

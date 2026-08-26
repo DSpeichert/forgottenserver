@@ -82,11 +82,13 @@ jobs:
       # have, so cmake is invoked directly. The build directory stays outside
       # the workspace because the datapack step below deletes the workspace
       # contents before collecting the binary.
+      # run-vcpkg exports VCPKG_ROOT. On Windows it contains backslashes, which
+      # an unquoted bash word would strip, so normalise them to forward slashes.
       - name: Configure with cmake
         run: >
           cmake -B ../build -S .
           -DCMAKE_BUILD_TYPE=${{ matrix.buildtype }}
-          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+          -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT//\\//}/scripts/buildsystems/vcpkg.cmake"
           -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }}
           -DUSE_LUAJIT=${{ matrix.luajit }}
         shell: bash
