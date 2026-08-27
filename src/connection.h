@@ -99,6 +99,10 @@ private:
 	void parseProxyAddress(const boost::system::error_code& error);
 	void applyProxyHeader();
 
+	// Reads `length` bytes into `buffer`, serving bytes handed back by the PROXY protocol detection before the socket
+	template <typename Handler>
+	void asyncRead(uint8_t* buffer, size_t length, Handler&& handler);
+
 	void onWriteOperation(const boost::system::error_code& error);
 
 	static void handleTimeout(ConnectionWeak_ptr connectionWeak, const boost::system::error_code& error);
@@ -127,6 +131,8 @@ private:
 	uint32_t packetsSent = 0;
 
 	tfs::net::proxy_protocol::Header proxyHeader{};
+	// Bytes read while probing for a PROXY protocol header that turned out to be ordinary client data
+	std::vector<uint8_t> pushback;
 
 	ConnectionState_t connectionState = CONNECTION_STATE_PENDING;
 	bool receivedFirst = false;
@@ -135,5 +141,27 @@ private:
 	bool receivedFirstHeader = false;
 	bool proxied = false;
 };
+
+template <typename Handler>
+void Connection::asyncRead(uint8_t* buffer, size_t length, Handler&& handler)
+{
+	if (!pushback.empty()) {
+		const size_t count = std::min(length, pushback.size());
+		std::copy_n(pushback.begin(), count, buffer);
+		pushback.erase(pushback.begin(), pushback.begin() + count);
+		buffer += count;
+		length -= count;
+
+		if (length == 0) {
+			// Complete through the executor like a socket read would, so the handler never runs inside the caller
+			boost::asio::post(socket.get_executor(), [handler = std::forward<Handler>(handler), count]() mutable {
+				handler(boost::system::error_code{}, count);
+			});
+			return;
+		}
+	}
+
+	boost::asio::async_read(socket, boost::asio::buffer(buffer, length), std::forward<Handler>(handler));
+}
 
 #endif // FS_CONNECTION_H
