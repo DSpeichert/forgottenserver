@@ -20,8 +20,6 @@ constexpr size_t addressBlockLength(AddressFamily family)
 			return 4 + 4 + 2 + 2;
 		case AddressFamily::INET6:
 			return 16 + 16 + 2 + 2;
-		case AddressFamily::UNIX:
-			return 108 + 108;
 		default:
 			return 0;
 	}
@@ -76,8 +74,17 @@ std::optional<Header> parseHeader(const uint8_t* data)
 	    .length = static_cast<uint16_t>((data[14] << 8) | data[15]),
 	};
 
-	if (header.command == Command::PROXY && header.length < addressBlockLength(header.family)) {
-		return std::nullopt;
+	if (header.command == Command::PROXY) {
+		// Only INET and INET6 carry a usable source address. The specification allows UNSPEC (falling back to the
+		// socket address) but a local proxy relaying a client it cannot identify is a misconfiguration, and accepting
+		// it would mark the connection as relayed while the loopback address stays in effect for bans and limits
+		if (header.family != AddressFamily::INET && header.family != AddressFamily::INET6) {
+			return std::nullopt;
+		}
+
+		if (header.length < addressBlockLength(header.family)) {
+			return std::nullopt;
+		}
 	}
 	return header;
 }

@@ -51,12 +51,12 @@ struct Header
 // SIGNATURE.size() bytes, so it can be used on a partial read to decide whether to keep reading a PROXY header.
 bool matchesSignature(const uint8_t* data, size_t size);
 
-// Parses the fixed-size header (HEADER_LENGTH bytes). Returns nullopt if the header is malformed, including when the
-// announced length is too short to hold the address block of the announced family.
+// Parses the fixed-size header (HEADER_LENGTH bytes). Returns nullopt if the header is malformed, including when a
+// PROXY command announces a family other than INET or INET6, or a length too short to hold its address block.
 std::optional<Header> parseHeader(const uint8_t* data);
 
 // Returns the original client address from the address block following the header (`header.length` bytes), or
-// nullopt if the header carries no usable address (LOCAL command, UNSPEC or UNIX family).
+// nullopt if the header carries no address (LOCAL command).
 std::optional<boost::asio::ip::address> parseSourceAddress(const Header& header, const uint8_t* data);
 
 } // namespace tfs::net::proxy_protocol
